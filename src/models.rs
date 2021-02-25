@@ -276,6 +276,234 @@ pub struct GetOrderTxData {
     // pub prev: bool,
 }
 
+#[derive(Debug, Default)]
+pub struct FullOrder {
+    pub id: String,
+    pub time: i64,
+    pub r#type: String,
+    pub kind: String,
+    pub price: String,
+    pub amount: String,
+    pub pending: String,
+    pub symbol1: String,
+    pub symbol2: String,
+    pub symbol1Amount: String,
+    pub symbol2Amount: String,
+    pub lastTxTime: i64,
+    pub lastTx: String,
+    pub tradingFeeUserVolumeAmount: String,
+    pub totalMakerAmount: String,
+    pub totalTakerAmount: String,
+    pub feeMakerAmount: String,
+    pub feeTakerAmount: String,
+    pub creditDebitSalvo: String,
+    pub fCreditDebitSalvo: String,
+    pub tradingFeeMaker: String,
+    pub tradingFeeTaker: String,
+    pub tradingFeeStrategy: String,
+    pub orderId: String,
+    pub remains: String,
+    pub pos: String,
+    pub status: String,
+    pub unknown_fields: HashMap<String, String>,
+}
+
+impl<'de> Deserialize<'de> for FullOrder {
+    fn deserialize<D>(deserializer: D) -> Result<FullOrder, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        enum Field {
+            Id,
+            Time,
+            TxnType,
+            Kind,
+            Price,
+            Amount,
+            Pending,
+            Symbol1,
+            Symbol2,
+            Symbol1Amount,
+            Symbol2Amount,
+            LastTxTime,
+            LastTx,
+            TradingFeeUserVolumeAmount,
+            TotalMakerAmount,
+            TotalTakerAmount,
+            FeeMakerAmount,
+            FeeTakerAmount,
+            CreditDebitSalvo,
+            FCreditDebitSalvo,
+            TradingFeeMaker,
+            TradingFeeTaker,
+            TradingFeeStrategy,
+            OrderId,
+            Remains,
+            Pos,
+            Status,
+            Unknown(String),
+        }
+
+        // Implementing a Field Deserialiser
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
+                where
+                    D: serde::Deserializer<'de>,
+            {
+                struct FieldVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        write!(formatter, "A FullOrder struct as defined by CEX.IO Rest API")
+                    }
+
+                    fn visit_str<E>(self, value: &str) -> Result<Field, E>
+                        where
+                            E: serde::de::Error,
+                    {
+                        if value.starts_with("ta:") {
+                            return Ok(Field::TotalMakerAmount);
+                        } else if value.starts_with("tta:") {
+                            return Ok(Field::TotalTakerAmount);
+                        } else if value.starts_with("fa:") {
+                            return Ok(Field::FeeMakerAmount);
+                        } else if value.starts_with("tfa:") {
+                            return Ok(Field::FeeTakerAmount);
+                        } else if value.starts_with("a:") {
+                            return Ok(Field::CreditDebitSalvo);
+                        } else if value.starts_with("f:") {
+                            return Ok(Field::FCreditDebitSalvo);
+                        }
+
+                        const standard_fields: [&str; 27] = [
+                            "id",
+                            "time",
+                            "type",
+                            "kind",
+                            "price",
+                            "amount",
+                            "pending",
+                            "symbol1",
+                            "symbol2",
+                            "symbol1Amount",
+                            "symbol2Amount",
+                            "lastTxTime",
+                            "lastTx",
+                            "tradingFeeUserVolumeAmount",
+                            "tradingFeeMaker",
+                            "tradingFeeTaker",
+                            "tradingFeeStrategy",
+                            "orderId",
+                            "remains",
+                            "pos",
+                            "status",
+                            "ta:{symbol2}",
+                            "tta:{symbol2}",
+                            "fa:{symbol2}",
+                            "tfa:{symbol2}",
+                            "a:{symbol1}:cds",
+                            "f:{symbol2:cds",
+                        ];
+
+                        match value {
+                            "id" => Ok(Field::Id),
+                            "time" => Ok(Field::Time),
+                            "type" => Ok(Field::TxnType),
+                            "kind" => Ok(Field::Kind),
+                            "price" => Ok(Field::Price),
+                            "amount" => Ok(Field::Amount),
+                            "pending" => Ok(Field::Pending),
+                            "symbol1" => Ok(Field::Symbol1),
+                            "symbol2" => Ok(Field::Symbol2),
+                            "symbol1Amount" => Ok(Field::Symbol1Amount),
+                            "symbol2Amount" => Ok(Field::Symbol2Amount),
+                            "lastTxTime" => Ok(Field::LastTxTime),
+                            "lastTx" => Ok(Field::LastTx),
+                            "tradingFeeUserVolumeAmount" => Ok(Field::TradingFeeUserVolumeAmount),
+                            "tradingFeeMaker" => Ok(Field::TradingFeeMaker),
+                            "tradingFeeTaker" => Ok(Field::TradingFeeTaker),
+                            "tradingFeeStrategy" => Ok(Field::TradingFeeStrategy),
+                            "orderId" => Ok(Field::OrderId),
+                            "remains" => Ok(Field::Remains),
+                            "pos" => Ok(Field::Pos),
+                            "status" => Ok(Field::Status),
+                            _ => Ok(Field::Unknown(value.to_string())),
+                        }
+                    }
+                }
+
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct OrderVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for OrderVisitor {
+            type Value = FullOrder;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("A FullOrder struct as defined by CEX.IO Rest API")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<FullOrder, V::Error>
+            where
+                V: serde::de::MapAccess<'de>,
+            {
+                let mut return_order = FullOrder::default();
+
+                while let Some(key) = map.next_key()? {
+
+                    let next_value: Option<String> = map.next_value()?;
+
+                    let next_value = match next_value {
+                        Some(n) => n,
+                        None => "".to_string(),
+                    };
+
+                    match key {
+                        Field::Id => {return_order.id = next_value;},
+                        Field::Time => {return_order.time = chrono::DateTime::parse_from_rfc3339(&next_value).unwrap().timestamp();},
+                        Field::TxnType => {return_order.r#type = next_value;},
+                        Field::Kind => {return_order.kind = next_value;}
+                        Field::Price => {return_order.price = next_value;},
+                        Field::Amount => {return_order.amount = next_value;},
+                        Field::Pending => {return_order.pending = next_value;},
+                        Field::Symbol1 => {return_order.symbol1 = next_value;},
+                        Field::Symbol2 => {return_order.symbol2 = next_value;},
+                        Field::Symbol1Amount => {return_order.symbol1Amount = next_value;},
+                        Field::Symbol2Amount => {return_order.symbol2Amount = next_value;},
+                        Field::LastTxTime => {return_order.lastTxTime = chrono::DateTime::parse_from_rfc3339(&next_value).unwrap().timestamp();},
+                        Field::LastTx => {return_order.lastTx = next_value;},
+                        Field::TradingFeeUserVolumeAmount => {return_order.tradingFeeUserVolumeAmount = next_value;},
+                        Field::TotalMakerAmount => {return_order.totalMakerAmount = next_value;},
+                        Field::TotalTakerAmount => {return_order.totalTakerAmount = next_value;},
+                        Field::FeeMakerAmount => {return_order.feeMakerAmount= next_value;},
+                        Field::FeeTakerAmount => {return_order.feeTakerAmount= next_value;},
+                        Field::CreditDebitSalvo => {return_order.creditDebitSalvo = next_value;},
+                        Field::FCreditDebitSalvo => {return_order.fCreditDebitSalvo = next_value;},
+                        Field::TradingFeeMaker => {return_order.tradingFeeMaker = next_value;},
+                        Field::TradingFeeTaker => {return_order.tradingFeeTaker = next_value;},
+                        Field::TradingFeeStrategy => {return_order.tradingFeeStrategy = next_value;},
+                        Field::OrderId => {return_order.orderId = next_value;},
+                        Field::Remains => {return_order.remains = next_value;},
+                        Field::Pos => {return_order.pos = next_value;},
+                        Field::Status => {return_order.status = next_value;},
+                        Field::Unknown(t) => {return_order.unknown_fields.insert(t, next_value);}
+                    }
+                }
+
+                Ok(return_order)
+            }
+        }
+
+        deserializer.deserialize_struct("FullOrder", &[], OrderVisitor)
+
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct GetOrderTxResult {
     pub e: String,
