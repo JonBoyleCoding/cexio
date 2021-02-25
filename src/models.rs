@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
+use serde::de::Visitor;
+use std::collections::HashMap;
 
 macro_rules! symbol_enum{
     ($first:ident $(, $sym:ident)*) => {
@@ -58,8 +60,6 @@ macro_rules! all_def {
 }
 
 use lazy_static::lazy_static;
-use serde::de::Visitor;
-use std::collections::HashMap;
 macro_rules! pairs {
     ($first_b:tt => $first_q:tt $(, $curr_b:tt => $curr_q:tt)*) => {
         lazy_static! {
@@ -321,7 +321,24 @@ pub struct GetOrderTxData {
     // pub prev: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub enum FullOrderStatus {
+    #[serde(rename(deserialize = "d"))]
+    Done,
+    #[serde(rename(deserialize = "c"))]
+    Cancelled,
+    #[serde(rename(deserialize = "cd"))]
+    PartialExecution,
+    #[serde(rename(deserialize = "a"))]
+    Active,
+    Unset,
+}
+
+impl Default for FullOrderStatus {
+    fn default() -> Self {FullOrderStatus::Unset}
+}
+
+#[derive(Debug, Default, Serialize)]
 pub struct FullOrder {
     pub id: String,
     pub time: i64,
@@ -349,7 +366,7 @@ pub struct FullOrder {
     pub orderId: String,
     pub remains: String,
     pub pos: String,
-    pub status: String,
+    pub status: FullOrderStatus,
     pub unknown_fields: HashMap<String, String>,
 }
 
@@ -501,43 +518,56 @@ impl<'de> Deserialize<'de> for FullOrder {
 
                 while let Some(key) = map.next_key()? {
 
-                    let next_value: Option<String> = map.next_value()?;
-
-                    let next_value = match next_value {
-                        Some(n) => n,
-                        None => "".to_string(),
-                    };
-
                     match key {
-                        Field::Id => {return_order.id = next_value;},
-                        Field::Time => {return_order.time = chrono::DateTime::parse_from_rfc3339(&next_value).unwrap().timestamp();},
-                        Field::TxnType => {return_order.r#type = next_value;},
-                        Field::Kind => {return_order.kind = next_value;}
-                        Field::Price => {return_order.price = next_value;},
-                        Field::Amount => {return_order.amount = next_value;},
-                        Field::Pending => {return_order.pending = next_value;},
-                        Field::Symbol1 => {return_order.symbol1 = next_value;},
-                        Field::Symbol2 => {return_order.symbol2 = next_value;},
-                        Field::Symbol1Amount => {return_order.symbol1Amount = next_value;},
-                        Field::Symbol2Amount => {return_order.symbol2Amount = next_value;},
-                        Field::LastTxTime => {return_order.lastTxTime = chrono::DateTime::parse_from_rfc3339(&next_value).unwrap().timestamp();},
-                        Field::LastTx => {return_order.lastTx = next_value;},
-                        Field::TradingFeeUserVolumeAmount => {return_order.tradingFeeUserVolumeAmount = next_value;},
-                        Field::TotalMakerAmount => {return_order.totalMakerAmount = next_value;},
-                        Field::TotalTakerAmount => {return_order.totalTakerAmount = next_value;},
-                        Field::FeeMakerAmount => {return_order.feeMakerAmount= next_value;},
-                        Field::FeeTakerAmount => {return_order.feeTakerAmount= next_value;},
-                        Field::CreditDebitSalvo => {return_order.creditDebitSalvo = next_value;},
-                        Field::FCreditDebitSalvo => {return_order.fCreditDebitSalvo = next_value;},
-                        Field::TradingFeeMaker => {return_order.tradingFeeMaker = next_value;},
-                        Field::TradingFeeTaker => {return_order.tradingFeeTaker = next_value;},
-                        Field::TradingFeeStrategy => {return_order.tradingFeeStrategy = next_value;},
-                        Field::OrderId => {return_order.orderId = next_value;},
-                        Field::Remains => {return_order.remains = next_value;},
-                        Field::Pos => {return_order.pos = next_value;},
-                        Field::Status => {return_order.status = next_value;},
-                        Field::Unknown(t) => {return_order.unknown_fields.insert(t, next_value);}
+                        Field::Status => {
+                            let tmp : Result<FullOrderStatus,_> = map.next_value();
+
+                            match tmp {
+                                Ok(t) => return_order.status = t,
+                                Err(e) => {return Err(e);},
+                            }
+                        },
+                        _ => {
+                            let next_value: Option<String> = map.next_value()?;
+
+                            let next_value = match next_value {
+                                Some(n) => n,
+                                None => "".to_string(),
+                            };
+
+                            match key {
+                                Field::Id => {return_order.id = next_value;},
+                                Field::Time => {return_order.time = chrono::DateTime::parse_from_rfc3339(&next_value).unwrap().timestamp();},
+                                Field::TxnType => {return_order.r#type = next_value;},
+                                Field::Kind => {return_order.kind = next_value;}
+                                Field::Price => {return_order.price = next_value;},
+                                Field::Amount => {return_order.amount = next_value;},
+                                Field::Pending => {return_order.pending = next_value;},
+                                Field::Symbol1 => {return_order.symbol1 = next_value;},
+                                Field::Symbol2 => {return_order.symbol2 = next_value;},
+                                Field::Symbol1Amount => {return_order.symbol1Amount = next_value;},
+                                Field::Symbol2Amount => {return_order.symbol2Amount = next_value;},
+                                Field::LastTxTime => {return_order.lastTxTime = chrono::DateTime::parse_from_rfc3339(&next_value).unwrap().timestamp();},
+                                Field::LastTx => {return_order.lastTx = next_value;},
+                                Field::TradingFeeUserVolumeAmount => {return_order.tradingFeeUserVolumeAmount = next_value;},
+                                Field::TotalMakerAmount => {return_order.totalMakerAmount = next_value;},
+                                Field::TotalTakerAmount => {return_order.totalTakerAmount = next_value;},
+                                Field::FeeMakerAmount => {return_order.feeMakerAmount= next_value;},
+                                Field::FeeTakerAmount => {return_order.feeTakerAmount= next_value;},
+                                Field::CreditDebitSalvo => {return_order.creditDebitSalvo = next_value;},
+                                Field::FCreditDebitSalvo => {return_order.fCreditDebitSalvo = next_value;},
+                                Field::TradingFeeMaker => {return_order.tradingFeeMaker = next_value;},
+                                Field::TradingFeeTaker => {return_order.tradingFeeTaker = next_value;},
+                                Field::TradingFeeStrategy => {return_order.tradingFeeStrategy = next_value;},
+                                Field::OrderId => {return_order.orderId = next_value;},
+                                Field::Remains => {return_order.remains = next_value;},
+                                Field::Pos => {return_order.pos = next_value;},
+                                Field::Unknown(t) => {return_order.unknown_fields.insert(t, next_value);}
+                                _ => {},
+                            }
+                        }
                     }
+
                 }
 
                 Ok(return_order)
