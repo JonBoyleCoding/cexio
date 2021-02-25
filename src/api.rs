@@ -134,6 +134,23 @@ impl CexAPI {
         make_post_request(self.get_signature(), "active_orders_status/", params)
     }
 
+    pub fn archived_orders(
+        self,
+        symbol1: Symbol,
+        symbol2: Symbol,
+        dateFrom: i64,
+        dateTo: i64,
+    ) -> Result<Vec<FullOrder>, reqwest::Error> {
+        let mut params = HashMap::new();
+
+        params.insert("dateTo".to_string(), dateTo.to_string());
+        params.insert("dateFrom".to_string(), dateFrom.to_string());
+        params.insert("lastTxDateTo".to_string(), dateTo.to_string());
+        params.insert("lastTxDateFrom".to_string(), dateFrom.to_string());
+
+        make_post_request_symbols(self.get_signature(), "archived_orders/", symbol1, symbol2, params)
+    }
+
     pub fn cancel_order(self, id: i64) -> Result<bool, reqwest::Error> {
         let mut params = HashMap::new();
         params.insert("id".to_string(), id.to_string());
