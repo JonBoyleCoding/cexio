@@ -27,6 +27,7 @@ hmac = '0.9.0'
 sha2 = '0.9.1'
 hex = '0.4.2'
 strum_macros = '0.19.2'
+lazy_static = '1.4.0'
 chrono = "0.4.19"
 
 [dependencies.reqwest]

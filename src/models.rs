@@ -57,10 +57,55 @@ macro_rules! all_def {
     }
 }
 
+use lazy_static::lazy_static;
+use serde::de::Visitor;
+use std::collections::HashMap;
+macro_rules! pairs {
+    ($first_b:tt => $first_q:tt $(, $curr_b:tt => $curr_q:tt)*) => {
+        lazy_static! {
+            pub static ref CURRENCY_PAIRS: Vec<(Symbol, Symbol)> = vec![
+                (Symbol::$first_b, Symbol::$first_q),
+                $(
+                    (Symbol::$curr_b, Symbol::$curr_q),
+                )?
+            ];
+        }
+    }
+}
+
 all_def!(AAVE,ADA,AKRO,ANT,ATOM,BAL,BAND,BAT,BCH,BCHA,BNT,BTC,BTT,BUSD,COMP,CREAM,CRV
 ,DAI,DASH,DOT,ETH,EUR,FUN,GAS,GBP,GLM,GUSD,GZIL,HOT,KAVA,KNC,KSM,LAMB,LINK,LTC,MATIC,MHC,MKR,MTA,
 MUSD,NEO,OCEAN,OMG,ONG,ONT,PAXG,REN,REPV2,RUB,SNX,SRM,STORJ,SUSHI,TON,TRX,TUSD,UMA,UNI,USD,USDC,
 USDT,UTK,WABI,WBTC,XLM,XRP,XTZ,YFI,YFII,ZAP,ZIL,ZRX);
+
+pairs!{BTC => USD, ETH => USD, BCH => USD, DASH => USD, LTC => USD, XRP => USD, XLM => USD,
+       OMG => USD, MHC => USD, TRX => USD, BTT => USD, ADA => USD, NEO => USD, GAS => USD,
+       BAT => USD, ATOM => USD, XTZ => USD, BTC => EUR, ETH => EUR, BCH => EUR, DASH => EUR,
+       XRP => EUR, XLM => EUR, OMG => EUR, MHC => EUR, TRX => EUR, BTT => EUR, LTC => EUR,
+       ADA => EUR, NEO => EUR, GAS => EUR, BAT => EUR, ATOM => EUR, XTZ => EUR, BTC => GBP,
+       ETH => GBP, BCH => GBP, MHC => GBP, LTC => GBP, XRP => GBP, ADA => GBP, NEO => GBP,
+       GAS => GBP, ATOM => GBP, BAT => GBP, XTZ => GBP, BTC => RUB, ETH => BTC, BCH => BTC,
+       DASH => BTC, LTC => BTC, XRP => BTC, XLM => BTC, OMG => BTC, GUSD => USD, ONT => USD,
+       ONG => USD, GUSD => EUR, ONT => EUR, ONG => EUR, MHC => BTC, MHC => ETH, TRX => BTC,
+       BTT => BTC, ONT => BTC, ONG => BTC, USDT => USD, USDT => EUR, USDT => GBP, USDT => RUB,
+       BTC => USDT, BTC => USDC, ETH => USDT, BCH => USDT, LTC => USDT, XRP => USDT, XLM => USDT,
+       OMG => USDT, TRX => USDT, ONT => USDT, ONG => USDT, ADA => USDT, USDC => USD, WABI => USD,
+       WABI => EUR, WABI => GBP, MATIC => USD, MATIC => EUR, MATIC => GBP, MATIC => USDT,
+       LINK => USD, LINK => EUR, LINK => GBP, MKR => USD, ZRX => USD, ZRX => USDT, LAMB => USD,
+       LAMB => USDT, HOT => USD, HOT => USDT, DASH => USDT, NEO => USDT, GAS => USDT, BAT => USDT,
+       ATOM => USDT, XTZ => USDT, GUSD => USDT, USDC => USDT, WABI => USDT, LINK => USDT,
+       DOT => USD, DOT => USDT, COMP => USD, COMP => USDT, ZIL => USD, ZIL => USDT, UNI => USD,
+       UNI => USDT, UNI => ETH, UMA => USD, UMA => USDT, UMA => ETH, YFI => USD, YFI => USDT,
+       YFI => ETH, SNX => USD, SNX => USDT, SNX => ETH, KNC => USD, KNC => USDT, KNC => ETH,
+       BAL => USD, BAL => USDT, BAL => ETH, CRV => USD, CRV => USDT, CRV => ETH, WBTC => USDT,
+       WBTC => ETH, DAI => USD, DAI => USDT, DAI => ETH, TUSD => USDT, TUSD => ETH, MTA => USDT,
+       MTA => ETH, MUSD => USDT, MUSD => ETH, SUSHI => USD, SUSHI => USDT, SUSHI => ETH,
+       CREAM => USDT, CREAM => ETH, YFII => USD, YFII => USDT, YFII => ETH, BUSD => USDT,
+       BUSD => ETH, REN => USD, REN => USDT, REN => ETH, BAND => USDT, BAND => ETH, AKRO => USDT,
+       BNT => USDT, ZAP => USDT, SRM => USDT, ANT => USDT, PAXG => USDT, OCEAN => USDT,
+       STORJ => USDT, KAVA => USDT, KSM => USDT, AAVE => USDT, REPV2 => USDT, BCHA => USDT,
+       KAVA => USD, GLM => USDT, GLM => USD, GZIL => USDT, GZIL => USD, TON => USDT, TON => USD,
+       FUN => USD, UTK => USD, USDC => EUR}
 
 pub fn symbols_to_string(symbols: Vec<Symbol>) -> String {
     symbols
